@@ -9,7 +9,9 @@ interface SearchInputProps {
 const SearchInput: React.FC<SearchInputProps> = ({ searchTerm, onSearchTermChange, onSearch }) => {
     return (
         <div className="mb-4">
-            <label className="block mb-2 text-sm font-medium text-gray-700" htmlFor="searchTerm">Search Term:</label>
+            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="searchTerm">
+                Search Term:
+            </label>
             <div className="flex">
                 <input
                     type="text"
