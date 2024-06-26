@@ -1,7 +1,8 @@
 import React from 'react';
 import { TrashIcon } from '@heroicons/react/24/solid';
 
-interface User {
+export interface User {
+    uuid: string;
     username: string;
     company: string;
     phoneNumber: string;

@@ -1,7 +1,6 @@
 package main
 
 import (
-    "database/sql"
     "fmt"
     "log"
     "net/http"
@@ -10,20 +9,33 @@ import (
     "strings"
 
 	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+    "github.com/gin-gonic/gin"
+    "github.com/google/uuid"
+    "gorm.io/driver/postgres"
+    "gorm.io/gorm"
+    "gorm.io/gorm/logger"
 )
 
+type User struct {
+    UUID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"uuid"`
+    Username    string `gorm:"uniqueIndex" json:"username"`
+    Company     string `json:"company"`
+    PhoneNumber string `json:"phoneNumber"`
+}
+
 func main() {
+    connStr := os.Getenv("POSTGRES_CONNECTION_STRING")
+    db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{
+        Logger: logger.Default.LogMode(logger.Silent),
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Run migrations
     runMigrations()
 
-	connStr := os.Getenv("POSTGRES_CONNECTION_STRING")
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	router := gin.Default()
+    router := gin.Default()
 
 	// Set up CORS middleware
 	router.Use(cors.New(cors.Config{
@@ -31,17 +43,7 @@ func main() {
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	}))
 
-    router.GET("/api/ping", func(c *gin.Context) {
-        var response string
-        err := db.QueryRow("SELECT 'pong'").Scan(&response)
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"message": "Database query error"})
-            return
-        }
-        c.JSON(http.StatusOK, gin.H{"message": response})
-    })
-
-	router.GET("/api/search", func(c *gin.Context) {
+    router.GET("/api/search", func(c *gin.Context) {
         rawQuery := c.Query("q")
         query, err := url.QueryUnescape(rawQuery)
         if err != nil {
@@ -53,7 +55,7 @@ func main() {
         // Trim spaces from the query
         query = strings.TrimSpace(query)
 
-        var results = []map[string]interface{}{}
+        var results []User = []User{}
         if query == "" {
             c.JSON(http.StatusOK, results)
             return
@@ -61,39 +63,18 @@ func main() {
 
         tsQuery := strings.Join(strings.Fields(query), " | ")
         searchQuery := fmt.Sprintf("%%%s%%", query)
-        rows, err := db.Query(
-            `SELECT username, company, phone_number
+
+        result := db.Raw(
+            `SELECT uuid, username, company, phone_number
              FROM users
-             WHERE tsv @@ to_tsquery($1)
-                OR username ILIKE $2
-                OR company ILIKE $2
-                OR phone_number ILIKE $2`,
-            tsQuery, searchQuery)
-        if err != nil {
-            log.Printf("Error querying database: %v", err)
+             WHERE tsv @@ to_tsquery(?)
+                OR username ILIKE ?
+                OR company ILIKE ?
+                OR phone_number ILIKE ?`,
+            tsQuery, searchQuery, searchQuery, searchQuery).Scan(&results)
+        if result.Error != nil {
+            log.Printf("Error querying database: %v", result.Error)
             c.JSON(http.StatusInternalServerError, gin.H{"message": "Search query error"})
-            return
-        }
-        defer rows.Close()
-
-        for rows.Next() {
-            var username, company, phoneNumber string
-            if err := rows.Scan(&username, &company, &phoneNumber); err != nil {
-                log.Printf("Error scanning row: %v", err)
-                c.JSON(http.StatusInternalServerError, gin.H{"message": "Error scanning results"})
-                return
-            }
-            result := map[string]interface{}{
-                "username":     username,
-                "company":      company,
-                "phoneNumber":  phoneNumber,
-            }
-            results = append(results, result)
-        }
-
-        if err = rows.Err(); err != nil {
-            log.Printf("Error iterating over rows: %v", err)
-            c.JSON(http.StatusInternalServerError, gin.H{"message": "Error iterating over rows"})
             return
         }
 

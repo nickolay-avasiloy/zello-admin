@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
 import SearchInput from './SearchInput';
-import UserTable from './UserTable';
-
-interface User {
-    username: string;
-    company: string;
-    phoneNumber: string;
-}
+import UserTable, {User} from './UserTable';
 
 const SearchTable: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');

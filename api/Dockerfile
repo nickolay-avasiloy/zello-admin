@@ -10,10 +10,6 @@ RUN go mod download
 
 COPY . .
 
-RUN go get -u github.com/lib/pq
-RUN go get -u github.com/golang-migrate/migrate/v4
-
-
 EXPOSE 8080
 
 CMD ["air", "-c", ".air.toml"]
