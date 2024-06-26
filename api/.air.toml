@@ -7,7 +7,7 @@ tmp_dir = "tmp"
 
 # Build command
 [build]
-  cmd = "go build -o ./tmp/main ."
+  cmd = "go build -o ./tmp/main ./main.go ./migrate.go"
 
 
 # Watch directories

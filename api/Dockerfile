@@ -11,12 +11,8 @@ RUN go mod download
 COPY . .
 
 RUN go get -u github.com/lib/pq
-RUN go get -u github.com/joho/godotenv
 RUN go get -u github.com/golang-migrate/migrate/v4
 
-# Go app
-#RUN go build -o /go/bin/api
-#RUN go build -o /go/bin/migrate ./migrations/migrate.go
 
 EXPOSE 8080
 
