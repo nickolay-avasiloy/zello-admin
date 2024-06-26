@@ -1,27 +1,16 @@
 package main
 
 import (
-    "fmt"
     "log"
-    "net/http"
-    "net/url"
     "os"
-    "strings"
 
 	"github.com/gin-contrib/cors"
     "github.com/gin-gonic/gin"
-    "github.com/google/uuid"
+    "github.com/nickolay-avasiloy/zello-admin/api/routes"
     "gorm.io/driver/postgres"
     "gorm.io/gorm"
     "gorm.io/gorm/logger"
 )
-
-type User struct {
-    UUID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"uuid"`
-    Username    string `gorm:"uniqueIndex" json:"username"`
-    Company     string `json:"company"`
-    PhoneNumber string `json:"phoneNumber"`
-}
 
 func main() {
     connStr := os.Getenv("POSTGRES_CONNECTION_STRING")
@@ -43,77 +32,8 @@ func main() {
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	}))
 
-    router.GET("/api/search", func(c *gin.Context) {
-        rawQuery := c.Query("q")
-        query, err := url.QueryUnescape(rawQuery)
-        if err != nil {
-            log.Printf("Error decoding query parameter: %v", err)
-            c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid query parameter"})
-            return
-        }
-
-        // Trim spaces from the query
-        query = strings.TrimSpace(query)
-
-        var results []User = []User{}
-        if query == "" {
-            c.JSON(http.StatusOK, results)
-            return
-        }
-
-        tsQuery := strings.Join(strings.Fields(query), " | ")
-        searchQuery := fmt.Sprintf("%%%s%%", query)
-
-        result := db.Raw(
-            `SELECT uuid, username, company, phone_number
-             FROM users
-             WHERE tsv @@ to_tsquery(?)
-                OR username ILIKE ?
-                OR company ILIKE ?
-                OR phone_number ILIKE ?`,
-            tsQuery, searchQuery, searchQuery, searchQuery).Scan(&results)
-        if result.Error != nil {
-            log.Printf("Error querying database: %v", result.Error)
-            c.JSON(http.StatusInternalServerError, gin.H{"message": "Search query error"})
-            return
-        }
-
-        c.JSON(http.StatusOK, results)
-    })
-
-    router.GET("/api/users", func(c *gin.Context) {
-        var users []User
-        result := db.Raw("SELECT * FROM users ORDER BY RANDOM() LIMIT 10").Scan(&users)
-        if result.Error != nil {
-            log.Printf("Error querying database: %v", result.Error)
-            c.JSON(http.StatusInternalServerError, gin.H{"message": "Error retrieving users"})
-            return
-        }
-
-        c.JSON(http.StatusOK, users)
-    })
-
-    router.DELETE("/api/users/:uuid", func(c *gin.Context) {
-        userUUID := c.Param("uuid")
-        if _, err := uuid.Parse(userUUID); err != nil {
-            c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid UUID"})
-            return
-        }
-
-        result := db.Delete(&User{}, "uuid = ?", userUUID)
-        if result.Error != nil {
-            log.Printf("Error deleting user: %v", result.Error)
-            c.JSON(http.StatusInternalServerError, gin.H{"message": "Error deleting user"})
-            return
-        }
-
-        if result.RowsAffected == 0 {
-            c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
-            return
-        }
-
-        c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
-    })
+    routes.SearchRoute(router, db)
+    routes.UsersRoute(router, db)
 
 	router.Run(":8080")
 }
