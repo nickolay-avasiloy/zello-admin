@@ -22,8 +22,18 @@ const SearchTable: React.FC = () => {
         fetchInitialUsers()
     }, []);
 
-    const handleDelete = (username: string) => {
-        setUsers(users.filter(user => user.username !== username));
+    const handleDelete = async (uuid: string) => {
+        try {
+            const response = await fetch(`${API_URL}/api/users/${uuid}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+            }
+            setUsers(users.filter(user => user.uuid !== uuid));
+        } catch (error) {
+            console.error('Error deleting user:', error);
+        }
     };
 
     const handleSearch = async () => {

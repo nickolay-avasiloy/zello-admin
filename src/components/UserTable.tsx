@@ -10,7 +10,7 @@ export interface User {
 
 interface UserTableProps {
     users: User[];
-    onDelete: (username: string) => void;
+    onDelete: (uuid: string) => void;
 }
 
 const UserTable: React.FC<UserTableProps> = ({ users, onDelete }) => {
@@ -32,7 +32,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, onDelete }) => {
                     <td className="px-4 py-2">{user.phoneNumber}</td>
                     <td className="px-4 py-2">
                         <button
-                            onClick={() => onDelete(user.username)}
+                            onClick={() => onDelete(user.uuid)}
                             className="flex items-center px-2 py-1 text-white bg-red-500 rounded hover:bg-red-700"
                         >
                             <TrashIcon className="w-5 h-5" />
