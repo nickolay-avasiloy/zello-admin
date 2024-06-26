@@ -2,10 +2,12 @@ package main
 
 import (
     "database/sql"
+    "fmt"
     "log"
     "net/http"
     "net/url"
     "os"
+    "strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -48,7 +50,25 @@ func main() {
             return
         }
 
-        rows, err := db.Query("SELECT username, company, phone_number FROM users WHERE tsv @@ plainto_tsquery($1)", query)
+        // Trim spaces from the query
+        query = strings.TrimSpace(query)
+
+        var results = []map[string]interface{}{}
+        if query == "" {
+            c.JSON(http.StatusOK, results)
+            return
+        }
+
+        tsQuery := strings.Join(strings.Fields(query), " | ")
+        searchQuery := fmt.Sprintf("%%%s%%", query)
+        rows, err := db.Query(
+            `SELECT username, company, phone_number
+             FROM users
+             WHERE tsv @@ to_tsquery($1)
+                OR username ILIKE $2
+                OR company ILIKE $2
+                OR phone_number ILIKE $2`,
+            tsQuery, searchQuery)
         if err != nil {
             log.Printf("Error querying database: %v", err)
             c.JSON(http.StatusInternalServerError, gin.H{"message": "Search query error"})
@@ -56,7 +76,6 @@ func main() {
         }
         defer rows.Close()
 
-        var results []map[string]interface{} = []map[string]interface{}{}
         for rows.Next() {
             var username, company, phoneNumber string
             if err := rows.Scan(&username, &company, &phoneNumber); err != nil {
