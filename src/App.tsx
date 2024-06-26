@@ -2,6 +2,7 @@ import React from 'react';
 import SearchTable from './components/SearchTable';
 import DarkModeToggle from './components/DarkModeToggle';
 import Logo from './components/Logo';
+import Footer from './components/Footer';
 
 const App: React.FC = () => {
     return (
@@ -11,6 +12,7 @@ const App: React.FC = () => {
                 <DarkModeToggle />
             </div>
             <SearchTable />
+            <Footer />
         </div>
     );
 }
