@@ -7,6 +7,13 @@ interface SearchInputProps {
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({ searchTerm, onSearchTermChange, onSearch }) => {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key !== 'Enter') {
+            return
+        }
+        onSearch();
+    };
+
     return (
         <div className="mb-4">
             <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="searchTerm">
@@ -19,6 +26,7 @@ const SearchInput: React.FC<SearchInputProps> = ({ searchTerm, onSearchTermChang
                     className="w-full px-4 py-2 border rounded-l-md focus:outline-none focus:ring focus:border-blue-300 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                     value={searchTerm}
                     onChange={(e) => onSearchTermChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
                 />
                 <button
                     onClick={onSearch}
