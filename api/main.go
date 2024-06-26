@@ -28,6 +28,16 @@ func main() {
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	}))
 
+    router.GET("/api/ping", func(c *gin.Context) {
+        var response string
+        err := db.QueryRow("SELECT 'pong'").Scan(&response)
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"message": "Database query error"})
+            return
+        }
+        c.JSON(http.StatusOK, gin.H{"message": response})
+    })
+
 	router.GET("/api/search", func(c *gin.Context) {
         query := c.Query("q")
         rows, err := db.Query("SELECT username, company, phone_number FROM users WHERE tsv @@ to_tsquery($1)", query)
