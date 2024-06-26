@@ -1,0 +1,26 @@
+# Config file for Air
+# see https://github.com/cosmtrek/air
+
+# Root directory for your project
+root = "."
+tmp_dir = "tmp"
+
+# Build command
+[build]
+  cmd = "go build -o ./tmp/main ."
+
+
+# Watch directories
+[watch]
+  includes = ["."]
+  excludes = ["tmp", "migrations"]
+
+# List of extensions to be watched
+[exts]
+  include_exts = [".go", ".tpl", ".tmpl", ".html"]
+
+# Log format
+log_format = "air: ${message}"
+
+# Log mode
+log_mode = "stdout"

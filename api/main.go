@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -20,13 +19,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	user := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	dbname := os.Getenv("POSTGRES_DB")
-	host := os.Getenv("POSTGRES_HOST")
-	port := os.Getenv("POSTGRES_PORT")
-
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)
+	connStr := os.Getenv("POSTGRES_CONNECTION_STRING")
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +35,7 @@ func main() {
 
 	router.GET("/api/ping", func(c *gin.Context) {
 		var response string
-		err := db.QueryRow("SELECT 'pong'").Scan(&response)
+		err := db.QueryRow("SELECT 'pong2'").Scan(&response)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Database query error"})
 			return
