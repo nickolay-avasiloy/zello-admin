@@ -86,7 +86,7 @@ func main() {
             result := map[string]interface{}{
                 "username":     username,
                 "company":      company,
-                "phone_number": phoneNumber,
+                "phoneNumber":  phoneNumber,
             }
             results = append(results, result)
         }
