@@ -10,22 +10,20 @@ interface User {
 
 const SearchTable: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [users, setUsers] = useState<User[]>([
-        { username: 'Joshua', company: 'Zello', phoneNumber: '512-937-5555' },
-        { username: 'Joshy', company: 'Craigs', phoneNumber: '512-879-5555' },
-        { username: 'Simon', company: 'Joshi LLC', phoneNumber: '279-103-9876' },
-    ]);
+    const [users, setUsers] = useState<User[]>([]);
 
     const handleDelete = (username: string) => {
         setUsers(users.filter(user => user.username !== username));
     };
 
-    const filteredUsers = users.filter(user =>
-        user.username.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const handleSearch = () => {
-        // Implement search logic if needed
+    const handleSearch = async () => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/search?q=${searchTerm}`);
+            const data = await response.json();
+            setUsers(data);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
     };
 
     return (
@@ -35,7 +33,7 @@ const SearchTable: React.FC = () => {
                 onSearchTermChange={setSearchTerm}
                 onSearch={handleSearch}
             />
-            <UserTable users={filteredUsers} onDelete={handleDelete} />
+            <UserTable users={users} onDelete={handleDelete} />
         </div>
     );
 }

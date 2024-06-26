@@ -1,10 +1,11 @@
 package main
 
 import (
-	"database/sql"
-	"log"
-	"net/http"
-	"os"
+    "database/sql"
+    "log"
+    "net/http"
+    "net/url"
+    "os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -39,18 +40,27 @@ func main() {
     })
 
 	router.GET("/api/search", func(c *gin.Context) {
-        query := c.Query("q")
-        rows, err := db.Query("SELECT username, company, phone_number FROM users WHERE tsv @@ to_tsquery($1)", query)
+        rawQuery := c.Query("q")
+        query, err := url.QueryUnescape(rawQuery)
         if err != nil {
+            log.Printf("Error decoding query parameter: %v", err)
+            c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid query parameter"})
+            return
+        }
+
+        rows, err := db.Query("SELECT username, company, phone_number FROM users WHERE tsv @@ plainto_tsquery($1)", query)
+        if err != nil {
+            log.Printf("Error querying database: %v", err)
             c.JSON(http.StatusInternalServerError, gin.H{"message": "Search query error"})
             return
         }
         defer rows.Close()
 
-        var results []map[string]interface{}
+        var results []map[string]interface{} = []map[string]interface{}{}
         for rows.Next() {
             var username, company, phoneNumber string
             if err := rows.Scan(&username, &company, &phoneNumber); err != nil {
+                log.Printf("Error scanning row: %v", err)
                 c.JSON(http.StatusInternalServerError, gin.H{"message": "Error scanning results"})
                 return
             }
@@ -60,6 +70,12 @@ func main() {
                 "phone_number": phoneNumber,
             }
             results = append(results, result)
+        }
+
+        if err = rows.Err(); err != nil {
+            log.Printf("Error iterating over rows: %v", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"message": "Error iterating over rows"})
+            return
         }
 
         c.JSON(http.StatusOK, results)
