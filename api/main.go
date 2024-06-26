@@ -81,7 +81,17 @@ func main() {
         c.JSON(http.StatusOK, results)
     })
 
+    router.GET("/api/users", func(c *gin.Context) {
+        var users []User
+        result := db.Limit(10).Find(&users)
+        if result.Error != nil {
+            log.Printf("Error querying database: %v", result.Error)
+            c.JSON(http.StatusInternalServerError, gin.H{"message": "Error retrieving users"})
+            return
+        }
 
+        c.JSON(http.StatusOK, users)
+    })
 
 	router.Run(":8080")
 }
