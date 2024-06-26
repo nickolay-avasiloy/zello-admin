@@ -109,3 +109,17 @@ You can use tools like `curl`, Postman, or a web browser to interact with the ba
 
 - **Description:** Delete a user by UUID.
 - **Response:** `{"message": "User deleted"}` or `{"message": "User not found"}`
+
+## Screenshots
+
+### Light Mode
+![Light Mode](screenshots/screenshot-0-light.png)
+
+### Dark Mode
+![Dark Mode](screenshots/screenshot-0-dark.png)
+
+### Additional Screenshots
+![Screenshot 1](screenshots/screenshot-1.png)
+![Screenshot 2](screenshots/screenshot-2.png)
+![Screenshot 3](screenshots/screenshot-3.png)
+![Screenshot 4](screenshots/screenshot-4.png)
